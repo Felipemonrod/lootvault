@@ -1,0 +1,68 @@
+services:
+
+  # Servidor MySQL próprio do LootVault. Cada microsserviço tem o SEU banco
+  # (personagens_service, inventario_service e loja_service), criados pelo Flyway.
+  mysql:
+    image: mysql:8.4
+    container_name: lootvault-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: admin123
+      TZ: America/Sao_Paulo
+    ports:
+      - "3307:3306"   # 3307 no seu PC para não conflitar com outro MySQL na 3306
+    volumes:
+      - lootvault-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-padmin123"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  personagens-service:
+    build: ./personagens-service
+    container_name: personagens-service
+    ports:
+      - "8081:8081"
+    environment:
+      TZ: America/Sao_Paulo
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/personagens_service?useTimezone=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_FLYWAY_URL: jdbc:mysql://mysql:3306/?allowPublicKeyRetrieval=true&useSSL=false
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  inventario-service:
+    build: ./inventario-service
+    container_name: inventario-service
+    ports:
+      - "8082:8082"
+    environment:
+      TZ: America/Sao_Paulo
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/inventario_service?useTimezone=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_FLYWAY_URL: jdbc:mysql://mysql:3306/?allowPublicKeyRetrieval=true&useSSL=false
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  loja-service:
+    build: ./loja-service
+    container_name: loja-service
+    ports:
+      - "8083:8083"
+    environment:
+      TZ: America/Sao_Paulo
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/loja_service?useTimezone=true&serverTimezone=UTC&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_FLYWAY_URL: jdbc:mysql://mysql:3306/?allowPublicKeyRetrieval=true&useSSL=false
+      # Dentro do Docker os serviços se enxergam pelo nome do container
+      URL_PERSONAGENS: http://personagens-service:8081
+      URL_INVENTARIO: http://inventario-service:8082
+    depends_on:
+      mysql:
+        condition: service_healthy
+      personagens-service:
+        condition: service_started
+      inventario-service:
+        condition: service_started
+
+volumes:
+  lootvault-mysql-data:

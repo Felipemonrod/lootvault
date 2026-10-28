@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS oferta (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  item_id BIGINT NOT NULL,
+  preco INT NOT NULL,
+  ativo BIT(1) NOT NULL,
+  PRIMARY KEY (id)
+);

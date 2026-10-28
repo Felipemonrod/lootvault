@@ -1,0 +1,13 @@
+target/
+*.class
+*.log
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+.sts4-cache/
